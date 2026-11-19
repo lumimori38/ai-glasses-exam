@@ -86,7 +86,7 @@
   .disclaimer{margin-top:3px;text-align:center;font-family:var(--gothic);font-size:9.5px;color:#9a9a9a;line-height:1.4}
 
   /* ---------- 문항 ---------- */
-  #quiz .qwrap{flex:1;display:flex;flex-direction:column;padding:14px 16px 0;min-height:0;position:relative}
+  #quiz .qwrap{flex:0 0 auto;display:flex;flex-direction:column;padding:14px 16px 0;min-height:0;position:relative}
   .qline{font-size:15px;line-height:1.6;font-weight:700;word-break:keep-all}
   .qline .no{font-weight:800;margin-right:2px}
   .qline .pt{font-weight:400;font-size:13px}
@@ -95,7 +95,8 @@
   #quiz .hud-tag{position:relative;margin:12px 4px 0 auto;max-width:86%;font-size:11.5px;transform:rotate(-1.5deg)}
   #quiz .hud-tag .lbl{display:block;font-size:9.5px;opacity:.7;margin-bottom:2px}
   #quiz .hud-tag .hl{color:#fff36b}
-  .choices{flex-shrink:0;padding:10px 16px calc(46px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:6px}
+  .qspace{flex:1;position:relative;min-height:0}
+  .choices{flex-shrink:0;padding:18px 16px 0;display:flex;flex-direction:column;gap:6px}
   .choice{
     display:flex;gap:10px;align-items:flex-start;text-align:left;background:none;border:none;border-top:1px solid #d6d4cc;
     padding:12px 4px 10px;font-family:var(--serif);font-size:14.5px;line-height:1.55;color:var(--ink);cursor:pointer;word-break:keep-all;
@@ -105,7 +106,7 @@
   .choice.marked .bubble{background:var(--ink);color:var(--ink)}
   .choice.marked .bubble::after{content:"";position:absolute;inset:-4px;border:2px solid var(--red);border-radius:50%;transform:rotate(-8deg) scale(1.15,1)}
   .choices.wait{visibility:hidden}
-  .scribble{position:absolute;left:22px;bottom:10px;font-family:var(--pen);font-size:24px;color:#555;transform:rotate(-6deg);pointer-events:none;opacity:.75;line-height:1}
+  .scribble{position:absolute;left:28px;top:22px;font-family:var(--pen);font-size:24px;color:#555;transform:rotate(-6deg);pointer-events:none;opacity:.75;line-height:1}
   .pgnum{position:absolute;bottom:4px;left:0;right:0;text-align:center;font-size:10px;color:var(--gray);pointer-events:none}
 
   /* 페이크 문항 */
@@ -188,6 +189,7 @@
   .b.save{width:100%;margin-top:12px;background:var(--red);border-color:var(--red);color:#fff;font-size:14.5px}
   .b.follow{margin-top:8px;border-style:solid;background:var(--paper)}
   .xl{color:inherit;text-decoration:underline;text-underline-offset:2px}
+  .b.x2{grid-column:1/-1;background:#fff;border-color:#000}
   .b.all{grid-column:1/-1;background:transparent;border-style:dashed}
   .outro{text-align:center;margin-top:14px;font-family:var(--gothic);font-size:11px;color:var(--gray)}
   .outro b{color:var(--ink)}
@@ -262,6 +264,7 @@
       <button class="choice" data-c="0"><span class="bubble">1</span><span id="cA"></span></button>
       <button class="choice" data-c="1"><span class="bubble">2</span><span id="cB"></span></button>
     </div>
+    <div class="qspace"><div class="scribble" id="scribble"></div></div>
   </section>
 
   <!-- ===== 채점 ===== -->
@@ -309,6 +312,7 @@
       <button class="b save" id="btnSave">결과 이미지 저장하기</button>
       <div class="btns">
         <a class="b x" id="btnX" href="#" target="_blank" rel="noopener">𝕏 에 결과 올리기</a>
+        <button class="b x2" id="btnShareImg" style="display:none">결과 이미지로 공유하기 (X 앱 등)</button>
         <button class="b" id="btnRetry">다시 응시하기</button>
         <button class="b" id="btnCopy">링크 복사</button>
         <button class="b all" id="btnAll">모든 결과 유형 보기 (16)</button>
@@ -420,6 +424,7 @@ function render(){
   $('cA').textContent=q.a[0]; $('cB').textContent=q.b[0];
   if(q.fake){
     quiz.classList.remove('fake'); void quiz.offsetWidth; quiz.classList.add('fake');
+    $('scribble').textContent='?!?!';
     $('qline').innerHTML=`<span class="no">${idx+1}.</span> [오류] 문제를 불러올 수 없습니다. <span class="pt">[??점]</span>`;
     $('panel').innerHTML=`
       <div class="win fake-win"><div class="bar"><span>${q.title}</span><span class="x">×</span></div>
@@ -433,7 +438,8 @@ function render(){
   }else{
     quiz.classList.remove('fake');
     $('qline').innerHTML=`<span class="no">${idx+1}.</span> 다음 〈상황〉에서 당신의 행동으로 가장 적절한 것은? <span class="pt">[${idx%3===2?3:2}점]</span>`;
-    $('panel').innerHTML=`<div class="situ">${q.t}</div><div class="hud-tag">${q.hud}</div><div class="scribble">${SCRIB[idx]}</div>`;
+    $('panel').innerHTML=`<div class="situ">${q.t}</div><div class="hud-tag">${q.hud}</div>`;
+    $('scribble').textContent=SCRIB[idx];
     ch.classList.remove('wait');
   }
   lock=false;
@@ -479,30 +485,52 @@ function result(code, f){
     $('bbText').innerHTML='페이크 문항 응답은 AI 안경이 따로 기억하고 있습니다.';
   }
   const txt=`AI 안경 끼고 시험 봤더니 판정 결과\n[${r.name}]\n\n“${r.ai}”\n\n#AI안경커닝테스트 by @lumimori38`;
-  $('btnX').href='https://twitter.com/intent/tweet?text='+encodeURIComponent(txt)+'&url='+encodeURIComponent(location.href.split('#')[0]);
+  shareTxt=txt; shareUrl=BASE+'r/'+code+'.html';
+  $('btnX').href='https://twitter.com/intent/tweet?text='+encodeURIComponent(txt)+'&url='+encodeURIComponent(shareUrl);
   show('result'); $('result').scrollTop=0;
+  cardBlob=null; cardUrl=null; setTimeout(makeCard,1300);
   requestAnimationFrame(()=>requestAnimationFrame(()=>document.querySelectorAll('#grades .track i').forEach(e=>e.style.width=e.dataset.v+'%')));
 }
 
+const BASE='https://lumimori38.github.io/ai-glasses-exam/';
+let shareTxt='', shareUrl=BASE, cardBlob=null, cardUrl=null, cardJob=null;
+async function makeCard(){
+  if(cardJob) return cardJob;
+  cardJob=(async()=>{
+    if(document.fonts && document.fonts.ready) await document.fonts.ready;
+    const canvas=await html2canvas($('report'),{scale:2,backgroundColor:'#fbfaf5',useCORS:true});
+    cardUrl=canvas.toDataURL('image/png');
+    cardBlob=await new Promise(r=>canvas.toBlob(r,'image/png'));
+  })().finally(()=>{cardJob=null});
+  return cardJob;
+}
+// 모바일: 결과 이미지 파일을 X 앱 등으로 바로 공유
+const canShareFiles=(()=>{try{return !!(navigator.canShare && navigator.canShare({files:[new File([''],'a.png',{type:'image/png'})]}))}catch(e){return false}})();
 function toast(t){$('toast').textContent=t;$('toast').classList.add('show');clearTimeout(toast.t);toast.t=setTimeout(()=>$('toast').classList.remove('show'),1800)}
 
 $('btnStart').onclick=start;
 document.querySelectorAll('.choice').forEach(b=>b.onclick=()=>choose(+b.dataset.c,b));
 $('popOk').onclick=()=>{$('pop').classList.remove('show'); next();};
 $('btnRetry').onclick=()=>show('start');
-$('btnCopy').onclick=async()=>{try{await navigator.clipboard.writeText(location.href.split('#')[0]);toast('> 링크 복사 완료')}catch(e){toast('> 복사 실패: 주소를 직접 복사해 주세요')}};
+$('btnCopy').onclick=async()=>{try{await navigator.clipboard.writeText(shareUrl||BASE);toast('> 링크 복사 완료')}catch(e){toast('> 복사 실패: 주소를 직접 복사해 주세요')}};
 $('btnAll').onclick=()=>{
   $('allList').innerHTML=ORDER.map(c=>`<button class="tc${c===myCode?' me':''}" data-c="${c}"><span class="c">${c}</span><span class="n">${R[c].name}${c===myCode?' ← 나':''}</span></button>`).join('');
   $('allList').querySelectorAll('.tc').forEach(b=>b.onclick=()=>{$('allv').classList.remove('show'); result(b.dataset.c, b.dataset.c===myCode?fk.join(''):null);});
   $('allv').classList.add('show');
 };
+if(canShareFiles) $('btnShareImg').style.display='block';
+$('btnShareImg').onclick=async()=>{
+  try{
+    if(!cardBlob) { toast('> 이미지 준비 중… 다시 눌러 주세요'); makeCard(); return; }
+    await navigator.share({files:[new File([cardBlob],'ai-glasses-result.png',{type:'image/png'})], text:shareTxt+'\n'+shareUrl});
+  }catch(e){ if(e && e.name!=='AbortError') toast('> 공유 실패: 저장 후 직접 올려 주세요'); }
+};
 $('btnSave').onclick=async()=>{
   const v=$('imgv'), img=$('imgvImg');
   img.removeAttribute('src'); $('imgvMsg').textContent='이미지 만드는 중…'; v.classList.add('show');
   try{
-    if(document.fonts && document.fonts.ready) await document.fonts.ready;
-    const canvas=await html2canvas($('report'),{scale:2,backgroundColor:'#fbfaf5',useCORS:true});
-    const url=canvas.toDataURL('image/png');
+    if(!cardUrl) await makeCard();
+    const url=cardUrl;
     img.src=url; $('imgDl').href=url;
     $('imgvMsg').textContent='이미지를 꾹 눌러 저장하세요 (PC는 다운로드)';
   }catch(e){ $('imgvMsg').textContent='이미지 생성에 실패했어요. 화면을 캡처해 주세요.'; }
